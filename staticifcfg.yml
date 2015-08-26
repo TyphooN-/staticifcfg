@@ -1,0 +1,31 @@
+---
+- hosts: staticifcfg
+  name: 'Backup and modify ifcfg file, then restart networking.'
+  vars:
+    - netmask: '255.255.248.0'
+    - bootproto: 'static'
+
+  tasks:
+    - name: 'Backup original ifcfg file - "{{ ansible_date_time.date }}"'
+      command: cp -f /etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" /etc/sysconfig/network-scripts/ifcfg-"{{ dev }}"-"{{ ansible_date_time.date }}"
+
+    - name: 'Set IPADDR in ifcfg-"{{ dev }}"'
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" state=present regexp='^IPADDR=' line='IPADDR="{{ ip }}"'
+
+    - name: 'Set DEVICE in ifcfg-"{{ dev }}"'
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" state=present regexp='^DEVICE=' line='DEVICE="{{ dev }}"'
+
+    - name: 'Set NETMASK in ifcfg-"{{ dev }}"'
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" state=present regexp='^NETMASK=' line='NETMASK="{{ netmask }}"'
+
+    - name: 'Set BOOTPROTO in ifcfg-"{{ dev }}"'
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" state=present regexp='^BOOTPROTO=' line='BOOTPROTO="{{ bootproto }}"'
+
+    - name: 'Set ONBOOT to yes in ifcfg-"{{ dev }}"'
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" state=present regexp='^ONBOOT=' line='ONBOOT=yes'
+
+    - name: 'Remove NM_CONTROLLED from ifcfg-"{{ dev }}"'
+      lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-"{{ dev }}" state=absent regexp='^NM_CONTROLLED='
+
+    - name: 'Restart networking service'
+      service: name=network state=restarted
